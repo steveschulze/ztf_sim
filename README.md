@@ -21,7 +21,7 @@ conda install python=3.11
 
 conda config --add channels conda-forge 
 conda config --add channels http://conda.anaconda.org/gurobi
-conda install pip numpy scipy astropy astroplan pandas scikit-learn xgboost sqlalchemy gurobi
+conda install pip numpy scipy astropy astroplan pandas=1.5 scikit-learn=1.5 xgboost sqlalchemy=1.4 gurobi=11
 
 
 pip install sklearn_pandas 
