@@ -10,6 +10,47 @@ from .field_selection_functions import *
 
 
 class ObservingProgram(object):
+    """
+    A class to represent an observing program.
+    Attributes
+    ----------
+    program_id : int
+        The unique identifier for the program.
+    subprogram_name : str
+        The name of the subprogram.
+    program_pi : str
+        The principal investigator of the program.
+    program_observing_time_fraction : float
+        The fraction of observing time allocated to the program.
+    subprogram_fraction : float
+        The fraction of the program's time allocated to the subprogram.
+    field_ids : list or None
+        The list of field IDs to be observed, or None if a selection function is used.
+    filter_ids : list
+        The list of filter IDs to be used.
+    internight_gap : float
+        The minimum gap between observations on different nights.
+    intranight_gap : float
+        The minimum gap between observations on the same night.
+    n_visits_per_night : int
+        The number of visits per night.
+    exposure_time : float
+        The exposure time for each observation.
+    nobs_range : dict or None
+        The range of number of observations, or None if not used.
+    filter_choice : str
+        The method of choosing filters ('rotate' or 'sequence').
+    active_months : str or list
+        The months during which the program is active ('all' or a list of month numbers).
+    field_selection_function : str or None
+        The name of the function used to select fields, or None if field_ids are used directly.
+    Methods
+    -------
+    assign_nightly_requests(time, fields, obs_log, other_program_fields, block_programs=False, skymaps=None, **kwargs)
+        Assigns nightly observation requests based on the program's parameters.
+    time_per_exposure()
+        Returns the total time per exposure, including readout time.
+    """
 
     def __init__(self, program_id, subprogram_name, program_pi,
                  program_observing_time_fraction, subprogram_fraction,
@@ -20,6 +61,29 @@ class ObservingProgram(object):
                  filter_choice='rotate', 
                  active_months='all',
                  field_selection_function=None):
+        """
+        Initialize an ObservingProgram instance.
+
+        Parameters:
+        program_id (int): Identifier for the program.
+        subprogram_name (str): Name of the subprogram.
+        program_pi (str): Principal Investigator of the program.
+        program_observing_time_fraction (float): Fraction of observing time allocated to the program.
+        subprogram_fraction (float): Fraction of the program's time allocated to the subprogram.
+        field_ids (list or None): List of field IDs to observe, or None if using a selection function.
+        filter_ids (list): List of filter IDs to use.
+        internight_gap (float): Minimum gap between observations on different nights.
+        intranight_gap (float): Minimum gap between observations on the same night.
+        n_visits_per_night (int): Number of visits per night.
+        exposure_time (Quantity): Exposure time for each observation.
+        nobs_range (tuple or None): Range of number of observations, or None if not specified.
+        filter_choice (str): Method for choosing filters ('rotate' or other).
+        active_months (str or list): Months when the program is active ('all' or list of months).
+        field_selection_function (callable or None): Function to select fields, or None if using field_ids.
+
+        Raises:
+        AssertionError: If both field_ids and field_selection_function are provided or both are None.
+        """
 
         assert ((field_ids is None) or (field_selection_function is None))
         assert not((field_ids is None) and (field_selection_function is None))
@@ -49,9 +113,30 @@ class ObservingProgram(object):
 
         self.field_selection_function = field_selection_function
 
-    def assign_nightly_requests(self, time, fields, obs_log, 
-            other_program_fields,
-            block_programs=False, skymaps = None, **kwargs):
+    def assign_nightly_requests(self, time, fields, obs_log, other_program_fields, block_programs=False, skymaps=None, **kwargs):
+        """
+        Assigns nightly observation requests based on the given parameters.
+        Parameters:
+        -----------
+        time : astropy.time.Time
+            The current time for which the requests are being generated.
+        fields : Fields
+            An object containing field information and methods to compute blocks and observability.
+        obs_log : ObservationLog
+            An object containing the observation log.
+        other_program_fields : list
+            A list of fields from other programs.
+        block_programs : bool, optional
+            Whether to block other programs (default is False).
+        skymaps : optional
+            Skymaps to be used for field selection (default is None).
+        **kwargs : dict
+            Additional keyword arguments.
+        Returns:
+        --------
+        list
+            A list of dictionaries containing the request sets for the night.
+        """
 
         # filters are given in filter_ids:
         # either a set of filters, or a fixed sequence
@@ -211,4 +296,12 @@ class ObservingProgram(object):
         return request_set
 
     def time_per_exposure(self):
+        """
+        Calculate the total time per exposure.
+
+        This method returns the sum of the exposure time and the readout time.
+
+        Returns:
+            float: The total time per exposure.
+        """
         return self.exposure_time + READOUT_TIME

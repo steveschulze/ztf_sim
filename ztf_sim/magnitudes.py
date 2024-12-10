@@ -4,9 +4,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 from .constants import BASE_DIR, FILTER_ID_TO_NAME, PIXEL_SCALE
 
-
-
-
 def interp_R20_airmass(filter_id=2):
     """Returns function to interpolate electrons/sec of a 20th mag source as a function of altitude."""
     R20_file = BASE_DIR + '../data/R20_absorbed_ZTF{}.txt'.format(

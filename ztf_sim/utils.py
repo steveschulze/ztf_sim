@@ -16,8 +16,21 @@ from .magnitudes import limiting_mag
 
 
 
-def df_write_to_sqlite(df, dbname, tablename=None,
-                       directory='data', **kwargs):
+def df_write_to_sqlite(df, dbname, tablename=None, directory='data', **kwargs):
+    """
+    Write a pandas DataFrame to an SQLite database.
+
+    Parameters:
+    df (pandas.DataFrame): The DataFrame to be written to the SQLite database.
+    dbname (str): The name of the SQLite database file (without the .db extension).
+    tablename (str, optional): The name of the table to write the DataFrame to. 
+                               If None, the table name will be the same as the database name. Default is None.
+    directory (str, optional): The directory where the SQLite database file will be stored. Default is 'data'.
+    **kwargs: Additional keyword arguments to pass to the pandas DataFrame `to_sql` method.
+
+    Returns:
+    None
+    """
 
     if tablename is None:
         tablename = dbname
@@ -26,8 +39,21 @@ def df_write_to_sqlite(df, dbname, tablename=None,
     df.to_sql(tablename, engine, if_exists='replace', **kwargs)
 
 
-def df_read_from_sqlite(dbname, tablename=None,
-                        directory='data', **kwargs):
+def df_read_from_sqlite(dbname, tablename=None, directory='data', **kwargs):
+    """
+    Reads a table from an SQLite database into a pandas DataFrame.
+
+    Parameters:
+    dbname (str): The name of the SQLite database file (without the .db extension).
+    tablename (str, optional): The name of the table to read from the database. 
+                               If None, defaults to the value of `dbname`.
+    directory (str, optional): The directory where the SQLite database file is located. 
+                               Defaults to 'data'.
+    **kwargs: Additional keyword arguments to pass to `pd.read_sql`.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the data from the specified table in the SQLite database.
+    """
 
     if tablename is None:
         tablename = dbname
@@ -70,7 +96,6 @@ def RA_to_HA(ra, time):
 
 def previous_12deg_evening_twilight(time):
     return P48_Observer.twilight_evening_nautical(time, which='previous')
-
 
 def next_12deg_evening_twilight(time):
     return P48_Observer.twilight_evening_nautical(time, which='next')
@@ -338,7 +363,7 @@ def compute_limiting_mag(df, time, sky, filter_id=None):
     sc = coord.SkyCoord(df['ra'], df['dec'], frame='icrs', unit='deg')
     sun = coord.get_sun(time)
     sun_altaz = skycoord_to_altaz(sun, time)
-    moon = coord.get_moon(time, location=P48_loc)
+    moon = coord.get_body("moon", time, location=P48_loc)
     moon_altaz = skycoord_to_altaz(moon, time)
     df.loc[:, 'moonillf'] = astroplan.moon.moon_illumination(time)
     

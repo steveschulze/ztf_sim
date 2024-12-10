@@ -16,8 +16,6 @@ from ..constants import BASE_DIR
 
 logger = logging.getLogger(__name__)
 
-
-
 def get_theta_given_phi(a, b, c, phi):
     """
     ax + by + cz defines a plane
@@ -44,6 +42,28 @@ def cos_in_sphere(theta1, phi1, theta2, phi2):
     return cos_rad
 
 def load_SRG_pointing(tnow):
+    """
+    Load SRG pointing data for a given date.
+    This function reads SRG pointing plans from CSV files located in the 
+    specified directory, concatenates them, and filters the data for the 
+    specified date.
+    
+    Parameters:
+    tnow (astropy.time.Time): The current time for which the SRG pointing 
+                              data is to be loaded. The date is extracted 
+                              from this parameter.
+    
+    Returns:
+    tuple: A tuple containing two numpy arrays:
+        - alphas (numpy.ndarray): Right Ascension (RA) values for the specified date.
+        - deltas (numpy.ndarray): Declination (Dec) values for the specified date.
+    
+    Raises:
+    FileNotFoundError: If no SRG pointing plan CSV files are found in the 
+                       specified directory.
+    ValueError: If no SRG pointing plans are found for the specified date.
+    """
+
     csvfiles = glob(f"{BASE_DIR}../../ztf_survey_configuration/srg_plan/*.csv")
     if len(csvfiles) == 0:
         raise FileNotFoundError('No detailed SRG pointing plans found')
@@ -138,6 +158,16 @@ def SRG_pointing(tnow):
     return alphas/np.pi*180, decs/np.pi*180
 
 def get_srg_fields(tnow, fields):
+    """
+    Get the list of ZTF fields that are within the SRG pointing area at a given time.
+
+    Parameters:
+    tnow (datetime): The current time for which the SRG pointing is to be determined.
+    fields (Fields): An instance of the Fields class containing field information and methods.
+
+    Returns:
+    list: A list of unique field indices that are within the SRG pointing area.
+    """
 
     try:
         srg_ra, srg_dec = load_SRG_pointing(tnow)

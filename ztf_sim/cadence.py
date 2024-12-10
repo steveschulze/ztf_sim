@@ -16,6 +16,19 @@ def enough_gap_since_last_obs(df, current_state, obs_log):
     """
     Determine if a sufficient time has passed since the last observation
     in this subprogram (in any filter):
+
+    Parameters:
+    df (pandas.DataFrame): DataFrame containing observation data with columns 
+                           'program_id', 'subprogram_name', 'field_id', and 'intranight_gap_min'.
+    current_state (dict): Dictionary containing the current state information, 
+                          specifically 'current_time' which has an attribute 'mjd'.
+    obs_log (object): An object that provides a method `select_last_observed_time_by_field` 
+                      to retrieve the last observed time for given field IDs, program IDs, 
+                      and subprogram names.
+
+    Returns:
+    pandas.Series: A boolean Series indicating whether the time since the last observation 
+                   is greater than or equal to the minimum intranight gap for each field.
     """
 
     now = current_state['current_time'].mjd

@@ -12,25 +12,106 @@ from .field_selection_functions import *
 
 
 class Configuration(object):
+    """
+    A class used to represent the Configuration.
+
+    Attributes
+    ----------
+    config : dict
+        A dictionary to store the configuration settings.
+
+    Methods
+    -------
+    __init__(self, config_file)
+        Initializes the Configuration object and loads the configuration from the given file if provided.
+    
+    load_configuration(self, config_file)
+        Loads the configuration from the given JSON file.
+    """
 
     def __init__(self, config_file):
+        """
+        Initializes the Configuration object.
+
+        Parameters
+        ----------
+        config_file : str
+            The path to the configuration JSON file.
+        """
+
+        """
+        Loads the configuration from the given JSON file.
+
+        Parameters
+        ----------
+        config_file : str
+            The path to the configuration JSON file.
+        """
 
         if config_file is not None:
             self.load_configuration(config_file)
 
     def load_configuration(self, config_file):
+        """
+        Load configuration from a JSON file.
+
+        Args:
+            config_file (str): Path to the configuration file.
+
+        Raises:
+            FileNotFoundError: If the configuration file does not exist.
+            json.JSONDecodeError: If the file is not a valid JSON.
+
+        Sets:
+            self.config (dict): The loaded configuration.
+        """
+        
         with open(config_file, 'r') as f:
             config = json.load(f)
         self.config = config
 
 class SchedulerConfiguration(Configuration):
+    """
+    SchedulerConfiguration is a class that handles the configuration for a scheduler.
+    Attributes:
+        scheduler_config_file (pathlib.PurePosixPath): The path to the scheduler configuration file.
+    Methods:
+        __init__(config_file):
+            Initializes the SchedulerConfiguration with the given configuration file.
+        check_configuration():
+            Checks if the configuration is valid. Raises ValueError if the configuration is invalid.
+        build_queue_configs():
+            Builds and returns a dictionary of queue configurations.
+        build_queues(queue_configs):
+            Builds and returns a dictionary of queues based on the provided queue configurations.
+    """
 
     def __init__(self, config_file):
+        """
+        Initialize the configuration with the given config file.
+
+        Args:
+            config_file (str): Path to the configuration file.
+
+        """
         super().__init__(config_file)
         self.scheduler_config_file = pathlib.PurePosixPath(config_file)
         self.check_configuration()
 
     def check_configuration(self):
+        """
+        Validates the scheduler configuration.
+
+        This method checks if the configuration contains the required 'queues' key.
+        It ensures that each queue in the configuration has a 'queue_name' and a 'config_file'.
+        Additionally, it verifies that there is a queue named 'default'.
+
+        Raises:
+            ValueError: If 'queues' is not present in the configuration.
+            ValueError: If no queue named 'default' is found.
+            AssertionError: If any queue does not have 'queue_name' or 'config_file'.
+        """
+        
         if 'queues' not in self.config:
             raise ValueError("Scheduler configuration must give queues")
         has_default = False
@@ -43,6 +124,19 @@ class SchedulerConfiguration(Configuration):
             raise ValueError("Scheduler configuration must specify a default queue")
 
     def build_queue_configs(self):
+        """
+        Builds and returns a dictionary of queue configurations.
+
+        This method reads the queue configurations specified in the 'queues' section
+        of the main configuration and creates a QueueConfiguration object for each queue.
+        The resulting dictionary maps queue names to their respective QueueConfiguration objects.
+
+        Returns:
+            dict: A dictionary where the keys are queue names and the values are QueueConfiguration objects.
+
+        Raises:
+            Exception: If there is an error reading any of the queue configuration files.
+        """
 
         queue_configs = {}
 
@@ -59,6 +153,20 @@ class SchedulerConfiguration(Configuration):
         return queue_configs
 
     def build_queues(self, queue_configs):
+        """
+        Build and return a dictionary of queue managers based on the provided configurations.
+        Args:
+            queue_configs (dict): A dictionary where keys are queue names and values are 
+                                  configuration objects containing a 'queue_manager' key 
+                                  with one of the following values: 'list', 'greedy', 'gurobi'.
+        Returns:
+            dict: A dictionary where keys are queue names and values are instances of 
+                  ListQueueManager, GreedyQueueManager, or GurobiQueueManager based on 
+                  the 'queue_manager' specified in the configuration.
+        Raises:
+            AssertionError: If the 'queue_manager' value is not one of 'list', 'greedy', or 'gurobi'.
+            Exception: If there is an error while creating a queue manager instance.
+        """
         
         queues = {}
         for queue_name, queue_config in queue_configs.items():
@@ -80,17 +188,46 @@ class SchedulerConfiguration(Configuration):
 
         return queues
 
-
-
-
-
 class QueueConfiguration(Configuration):
+    """
+    A class used to represent the configuration for a queue-based observing program.
+
+    Attributes
+    ----------
+    config_file : str
+        The path to the configuration file.
+
+    Methods
+    -------
+    check_configuration():
+        Validates the configuration to ensure observing fractions sum to 1 and program names are valid.
+    
+    build_observing_programs():
+        Constructs observing programs based on the configuration.
+    """
 
     def __init__(self, config_file):
+        """
+        Initializes the QueueConfiguration with a configuration file and checks the configuration.
+
+        Parameters
+        ----------
+        config_file : str
+            The path to the configuration file.
+        """
+
         super().__init__(config_file)
         self.check_configuration()
 
     def check_configuration(self):
+        """
+        Validates the configuration to ensure observing fractions sum to 1 for each month and program names are valid.
+
+        Raises
+        ------
+        ValueError
+            If the observing fractions do not sum to 1 or if a program name is not in the known programs.
+        """
 
         if self.config['queue_manager'] != 'list' and len(self.config['observing_programs']):
             for month in range(1,13):
@@ -109,6 +246,19 @@ class QueueConfiguration(Configuration):
                         prog['program_name']))
 
     def build_observing_programs(self):
+        """
+        Constructs observing programs based on the configuration.
+
+        Returns
+        -------
+        list
+            A list of ObservingProgram objects.
+
+        Raises
+        ------
+        ValueError
+            If field_ids are not valid or if field_selection_function does not exist.
+        """
 
         OPs = []
         f = Fields()

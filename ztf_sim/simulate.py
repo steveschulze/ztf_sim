@@ -34,6 +34,45 @@ def simulate(scheduler_config_file, sim_config_file,
         output_path = BASE_DIR+'../sims/',
         profile=False, raise_queue_empty=False, fallback=True, 
         time_limit = 30*u.second):
+    """
+    Simulates the ZTF survey scheduling process.
+
+    Parameters:
+    -----------
+    scheduler_config_file : str
+        Filename of the scheduler configuration file.
+    sim_config_file : str
+        Filename of the simulation configuration file.
+    scheduler_config_path : str, optional
+        Path to the directory containing the scheduler configuration file.
+        Default is BASE_DIR + '../../ztf_survey_configuration/'.
+    sim_config_path : str, optional
+        Path to the directory containing the simulation configuration file.
+        Default is BASE_DIR + '../config/'.
+    output_path : str, optional
+        Path to the directory where simulation outputs will be saved.
+        Default is BASE_DIR + '../sims/'.
+    profile : bool, optional
+        If True, profile the simulation using pyinstrument. Default is False.
+    raise_queue_empty : bool, optional
+        If True, raise an exception when the queue is empty. Default is False.
+    fallback : bool, optional
+        If True, use a fallback queue when the main queue is empty. Default is True.
+    time_limit : astropy.units.Quantity, optional
+        Time limit for assigning nightly requests. Default is 30 seconds.
+
+    Raises:
+    -------
+    QueueEmptyError
+        If the queue is empty and raise_queue_empty is True.
+
+    Notes:
+    ------
+    This function simulates the scheduling process of the ZTF survey by
+    initializing the scheduler and telescope state machine, loading
+    configuration parameters, and iterating through the survey duration to
+    assign nightly requests and handle observations.
+    """
 
     if profile:
         try:

@@ -11,6 +11,31 @@ from .constants import BASE_DIR, P48_loc, FILTER_IDS
 from .constants import READOUT_TIME, EXPOSURE_TIME, FILTER_CHANGE_TIME, slew_time
 
 class TelescopeStateMachine(Machine):
+    """
+    A state machine to manage the operations of a telescope, including slewing, changing filters, and exposing.
+
+    Attributes:
+        current_time (Time): The current time in UTC.
+        current_ha (Angle): The current hour angle of the telescope.
+        current_dec (Angle): The current declination of the telescope.
+        current_domeaz (Angle): The current azimuth of the telescope dome.
+        current_filter_id (int): The ID of the current filter in use.
+        filters (list): A list of available filter IDs.
+        current_zenith_seeing (Angle): The current seeing at the zenith.
+        target_skycoord (SkyCoord): The target sky coordinates for the telescope.
+        historical_observability_year (int): The year for historical observability data.
+        observability (PTFObservabilityDB): The observability database.
+        logger (Logger): Logger for the state machine.
+
+    Methods:
+        current_state_dict(): Return current state parameters in a dictionary.
+        can_observe(): Check if the telescope can observe based on time and weather.
+        slew_allowed(target_skycoord): Check if the slew to the target coordinates is within allowed limits.
+        process_slew(target_skycoord, readout_time=READOUT_TIME): Process the slewing of the telescope to the target coordinates.
+        process_filter_change(target_filter_id, filter_change_time=FILTER_CHANGE_TIME): Process the changing of the filter.
+        process_exposure(exposure_time): Process the exposure of the telescope.
+        wait(wait_time=EXPOSURE_TIME): Wait for a specified amount of time.
+    """
 
     def __init__(self, current_time=Time('2018-01-01', scale='utc',
                                          location=P48_loc),
@@ -20,6 +45,31 @@ class TelescopeStateMachine(Machine):
                  current_zenith_seeing=2.0 * u.arcsec,
                  target_skycoord=None,
                  historical_observability_year=2015):
+
+        """
+        Initialize the TelescopeStateMachine.
+
+        Parameters
+        ----------
+        current_time : astropy.time.Time, optional
+            The current time, default is '2018-01-01' UTC.
+        current_ha : astropy.units.Quantity, optional
+            The current hour angle, default is 0 degrees.
+        current_dec : astropy.units.Quantity, optional
+            The current declination, default is 33.36 degrees.
+        current_domeaz : astropy.units.Quantity, optional
+            The current dome azimuth, default is 180 degrees.
+        current_filter_id : int, optional
+            The current filter ID, default is 2.
+        filters : list, optional
+            The list of available filter IDs, default is FILTER_IDS.
+        current_zenith_seeing : astropy.units.Quantity, optional
+            The current zenith seeing, default is 2.0 arcseconds.
+        target_skycoord : astropy.coordinates.SkyCoord, optional
+            The target sky coordinates, default is None.
+        historical_observability_year : int, optional
+            The year for historical observability data, default is 2015.
+        """
 
         # Define some states.
         states = ['ready', 'cant_observe',
@@ -128,8 +178,24 @@ class TelescopeStateMachine(Machine):
             return False
         return True
 
-    def process_slew(self, target_skycoord,
-                     readout_time=READOUT_TIME):
+    def process_slew(self, target_skycoord, readout_time=READOUT_TIME):
+        """
+        Processes the telescope slewing to a new target sky coordinate.
+
+        Parameters:
+        target_skycoord (SkyCoord): The target sky coordinates to slew to.
+        readout_time (Quantity, optional): The readout time during the slew. 
+                                           Defaults to READOUT_TIME.
+
+        Notes:
+        - If readout_time is nonzero, it is assumed that the telescope is reading during the slew,
+          which sets the lower limit for the time between exposures.
+        - The function calculates the time required to slew to the new target coordinates.
+        - The current time is updated based on the calculated slew time.
+        - The function updates the current hour angle (HA), declination (dec), and dome azimuth (domeaz)
+          after the slew is complete.
+        """
+
         # if readout_time is nonzero, assume we are reading during the slew,
         # which sets the lower limit for the time between exposures.
 
@@ -168,6 +234,17 @@ class TelescopeStateMachine(Machine):
 
     def process_filter_change(self, target_filter_id,
                               filter_change_time=FILTER_CHANGE_TIME):
+        """
+        Processes the change of the telescope's filter.
+
+        Parameters:
+        target_filter_id (int): The ID of the target filter to change to.
+        filter_change_time (float, optional): The time it takes to change the filter. Defaults to FILTER_CHANGE_TIME.
+
+        Updates:
+        self.current_filter_id: Sets to the target_filter_id.
+        self.current_time: Increments by filter_change_time if the filter is changed.
+        """
         if self.current_filter_id != target_filter_id:
             self.current_filter_id = target_filter_id
             self.current_time += filter_change_time
@@ -188,8 +265,39 @@ class TelescopeStateMachine(Machine):
 
 
 class PTFObservabilityDB(object):
+    """
+    PTFObservabilityDB is a class that provides methods to check the historical observability of the Palomar Transient Factory (PTF) based on weather data.
+
+    Methods
+    -------
+    __init__():
+        Initializes the PTFObservabilityDB instance by reading weather data from an SQLite database and setting it as a DataFrame indexed by year and block.
+
+    check_historical_observability(time, year=2015, nobs_min=5):
+        Given a (possibly future) UTC time, looks up whether PTF was observing at that time in the specified year.
+
+        year : int, optional
+            Year to check PTF historical observing (default is 2015). Valid range is from 2009 to 2015.
+        nobs_min : int, optional
+            Minimum number of observations per block to count as observable (default is 5).
+
+        -------
+        bool
+            True if the number of observations in the specified block is greater than or equal to nobs_min, False otherwise.
+    """
 
     def __init__(self):
+        """
+        Initializes the TelescopeStateMachine instance.
+
+        This constructor reads data from an SQLite database table named 'weather_blocks'
+        and sets the DataFrame index to ['year', 'block'].
+
+        Attributes:
+            df (pd.DataFrame): A DataFrame containing the weather blocks data with
+                               'year' and 'block' as the index.
+        """
+        
         df = df_read_from_sqlite('weather_blocks')
         self.df = df.set_index(['year', 'block'])
 

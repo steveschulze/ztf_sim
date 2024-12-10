@@ -25,9 +25,31 @@ msip_cadence = 2
 msip_internight_gap = msip_cadence*u.day
 msip_nobs_per_night = 2
 
-def msip_o4_skymap_selection(time, obs_log, other_program_fields, fields,
-                             skymaps, silent=False):
-    """Use skymaps to select fields for inclusion."""
+def msip_o4_skymap_selection(time, obs_log, other_program_fields, fields, skymaps, silent=False):
+
+    """
+    Use skymaps to select fields for inclusion.
+
+    Parameters:
+    -----------
+    time : astropy.time.Time
+        The current time.
+    obs_log : ObservationLog
+        Log of previous observations.
+    other_program_fields : dict
+        Dictionary containing information about fields observed by other programs.
+    fields : Fields
+        Object containing field information and selection methods.
+    skymaps : dict
+        Dictionary of skymaps with trigger names as keys and skymap objects as values.
+    silent : bool, optional
+        If True, suppress logging output. Default is False.
+
+    Returns:
+    --------
+    field_ids_to_observe : list
+        List of field IDs selected for observation.
+    """
 
     observable_field_ids = fields.select_field_ids(dec_range=[-32,90.],
                            grid_id=0,
@@ -135,7 +157,29 @@ def msip_o4_skymap_selection(time, obs_log, other_program_fields, fields,
 
 def msip_nss_selection_phaseii(time, obs_log, other_program_fields, fields, 
                                skymaps, silent=False):
-    """Select MSIP NSS fields so we ensure lowdec coverage."""
+    """
+    Select MSIP NSS fields to ensure low declination coverage.
+
+    Parameters:
+    -----------
+    time : astropy.time.Time
+        The current time.
+    obs_log : ObsLog
+        The observation log containing past observations.
+    other_program_fields : dict
+        Dictionary containing information about other program fields.
+    fields : Fields
+        The Fields object containing field information.
+    skymaps : SkyMaps
+        The SkyMaps object containing sky map information.
+    silent : bool, optional
+        If True, suppress logging output. Default is False.
+
+    Returns:
+    --------
+    list
+        List of field IDs to observe for MSIP NSS.
+    """
 
     candidate_nss_field_ids = fields.select_field_ids(dec_range=[-32,90.],
                            grid_id=0,
