@@ -8,7 +8,7 @@ Implements the Integer Linear Programming scheduling algorithm described in
 
 You will need a license for the [Gurobi](http://www.gurobi.com/) optimizer on the machine you want to run simulations on.  [Free academic licenses](http://www.gurobi.com/academia/for-universities) are readily available.
 
-You are strongly encouraged to use `conda` and a conda environment for the installation.
+You are strongly encouraged to use `conda` and a conda environment for the installation. AstroPy 7+ is required.
 
 
 ```
